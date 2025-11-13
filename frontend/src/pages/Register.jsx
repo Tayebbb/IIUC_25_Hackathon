@@ -105,7 +105,7 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-bg-muted dark:bg-gray-900">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -114,12 +114,12 @@ const Register = () => {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <h2 className="font-heading text-3xl font-bold mb-2">Start Your Journey</h2>
-          <p className="text-text-muted">Create your CareerPath account and discover opportunities</p>
+          <h2 className="font-heading text-3xl font-bold mb-2 text-gray-900">Start Your Journey</h2>
+          <p className="text-gray-600">Create your CareerPath account and discover opportunities</p>
         </div>
 
         {/* Registration Form */}
-        <div className="card p-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

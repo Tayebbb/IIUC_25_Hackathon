@@ -31,7 +31,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-bg-muted dark:bg-gray-900 border-t border-border dark:border-border-dark mt-auto">
+    <footer className="bg-white border-t border-gray-200">
       <div className="section-container py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
