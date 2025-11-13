@@ -9,6 +9,8 @@ import { motion } from 'framer-motion';
 import { Search, MapPin, Briefcase, Filter } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import SimpleHoverEffect from '../SimpleHoverEffect';
+import SimpleWebEffect from '../SimpleWebEffect';
 
 const Jobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -144,36 +146,40 @@ const Jobs = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Link to={`/jobs/${job._id}`} className="card p-6 hover:shadow-lift transition-all block">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-heading text-xl font-semibold">{job.title}</h3>
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                          job.type === 'Internship' ? 'bg-blue-100 text-blue-700' :
-                          job.type === 'Full-time' ? 'bg-green-100 text-green-700' :
-                          'bg-purple-100 text-purple-700'
-                        }`}>
-                          {job.type}
-                        </span>
+                <SimpleWebEffect webColor="#10b981">
+                  <SimpleHoverEffect accentColor="#10b981">
+                    <Link to={`/jobs/${job._id}`} className="card p-6 hover:shadow-lift transition-all block">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-heading text-xl font-semibold">{job.title}</h3>
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              job.type === 'Internship' ? 'bg-blue-100 text-blue-700' :
+                              job.type === 'Full-time' ? 'bg-green-100 text-green-700' :
+                              'bg-purple-100 text-purple-700'
+                            }`}>
+                              {job.type}
+                            </span>
+                          </div>
+                          <p className="text-text-muted mb-3">{job.company} • {job.location}</p>
+                          <p className="text-sm text-text-muted line-clamp-2 mb-3">{job.description}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {job.requiredSkills.slice(0, 5).map((skill) => (
+                              <span key={skill} className="px-2 py-1 bg-bg-muted text-xs rounded">
+                                {skill}
+                              </span>
+                            ))}
+                            {job.requiredSkills.length > 5 && (
+                              <span className="px-2 py-1 text-xs text-text-muted">
+                                +{job.requiredSkills.length - 5} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-text-muted mb-3">{job.company} • {job.location}</p>
-                      <p className="text-sm text-text-muted line-clamp-2 mb-3">{job.description}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {job.requiredSkills.slice(0, 5).map((skill) => (
-                          <span key={skill} className="px-2 py-1 bg-bg-muted text-xs rounded">
-                            {skill}
-                          </span>
-                        ))}
-                        {job.requiredSkills.length > 5 && (
-                          <span className="px-2 py-1 text-xs text-text-muted">
-                            +{job.requiredSkills.length - 5} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                    </Link>
+                  </SimpleHoverEffect>
+                </SimpleWebEffect>
               </motion.div>
             ))}
           </div>

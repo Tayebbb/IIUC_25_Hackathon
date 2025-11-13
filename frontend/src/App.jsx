@@ -2,7 +2,7 @@
  * App Component
  * Main application with routing and layout
  */
-
+import TestHoverEffects from './TestHoverEffects';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
@@ -40,6 +40,7 @@ function App() {
             <Route path="/jobs/:id" element={<JobDetails />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/test-hover" element={<TestHoverEffects />} />
 
             {/* Protected routes */}
             <Route

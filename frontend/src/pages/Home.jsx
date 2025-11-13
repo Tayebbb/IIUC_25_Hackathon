@@ -6,6 +6,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Target, BookOpen, Users, Sparkles, TrendingUp, Award } from 'lucide-react';
+import SimpleHoverEffect from '../SimpleHoverEffect';
+import SimpleWebEffect from '../SimpleWebEffect';
 
 const Home = () => {
   const features = [
@@ -88,13 +90,17 @@ const Home = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/register" className="btn-primary flex items-center justify-center space-x-2">
-                  <span>Get Started</span>
-                  <ArrowRight size={18} />
-                </Link>
-                <Link to="/jobs" className="btn-outline flex items-center justify-center space-x-2">
-                  <span>Explore Jobs</span>
-                </Link>
+                <SimpleHoverEffect accentColor="#10b981">
+                  <Link to="/register" className="btn-primary flex items-center justify-center space-x-2">
+                    <span>Get Started</span>
+                    <ArrowRight size={18} />
+                  </Link>
+                </SimpleHoverEffect>
+                <SimpleHoverEffect accentColor="#10b981">
+                  <Link to="/jobs" className="btn-outline flex items-center justify-center space-x-2">
+                    <span>Explore Jobs</span>
+                  </Link>
+                </SimpleHoverEffect>
               </div>
 
               {/* Stats */}
