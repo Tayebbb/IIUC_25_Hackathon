@@ -4,6 +4,8 @@ import { User, Briefcase, BookOpen, TrendingUp, ArrowRight, GraduationCap, Check
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { calculateMatchScore } from '../utils/matchScore';
+import { getLearningSuggestions } from '../utils/getLearningSuggestions';
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -29,6 +31,7 @@ const Dashboard = () => {
   const [recommendations] = useState({ jobs: [], resources: [] });
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [userProfile, setUserProfile] = useState(null);
+  const [skillGapResources, setSkillGapResources] = useState([]);
 
   // Monitor authentication state
   useEffect(() => {
@@ -38,6 +41,7 @@ const Dashboard = () => {
         loadUserProfile(user.uid);
         fetchEnrolledCourses(user.email);
         fetchRecommendedCourses(user.email);
+        fetchSkillGapResources(user.uid);
       } else {
         setLoading(false);
       }
@@ -120,6 +124,73 @@ const Dashboard = () => {
       setEnrolledCourses(userCourses);
     } catch (error) {
       console.error('Error fetching enrolled courses:', error);
+    }
+  };
+
+  // Fetch skill gap learning resources
+  const fetchSkillGapResources = async (userId) => {
+    try {
+      // Get user profile
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (!userDoc.exists() || !userDoc.data().skills) {
+        return;
+      }
+
+      const userData = userDoc.data();
+
+      // Get all jobs
+      const jobsSnapshot = await getDocs(collection(db, 'jobs'));
+      const jobs = jobsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Get learning resources
+      const resourcesSnapshot = await getDocs(collection(db, 'learningResources'));
+      const allResources = resourcesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Find top matched jobs and collect missing skills
+      const jobsWithScores = jobs.map(job => {
+        const matchResult = calculateMatchScore(userData, job);
+        return {
+          ...job,
+          matchScore: matchResult.score,
+          matchDetails: matchResult
+        };
+      });
+
+      const topJobs = jobsWithScores
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 5);
+
+      // Collect all missing skills from top jobs
+      const allMissingSkills = new Set();
+      topJobs.forEach(job => {
+        job.matchDetails.missingSkills.forEach(skill => allMissingSkills.add(skill));
+      });
+
+      // Get learning suggestions for missing skills
+      const suggestions = getLearningSuggestions(Array.from(allMissingSkills), allResources);
+      
+      // Flatten suggestions into single array
+      const resources = [];
+      Object.values(suggestions).forEach(skillResources => {
+        resources.push(...skillResources);
+      });
+
+      // Remove duplicates and take top 6
+      const uniqueResources = Array.from(
+        new Map(resources.map(r => [r.id, r])).values()
+      ).slice(0, 6);
+
+      setSkillGapResources(uniqueResources);
+    } catch (error) {
+      console.error('Error fetching skill gap resources:', error);
     }
   };
 
@@ -361,15 +432,38 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <BookOpen className="text-primary glow-icon" size={28} />
-              <h2 className="text-2xl font-bold glow-text">Learning Resources</h2>
+              <h2 className="text-2xl font-bold glow-text">Recommended Learning Resources</h2>
             </div>
-            <button className="text-primary hover:text-primary-light flex items-center gap-2 font-medium transition-colors">
-              <span>View All</span>
-              <ArrowRight size={18} />
-            </button>
+            {skillGapResources.length > 0 && (
+              <a 
+                href="/jobs" 
+                className="text-primary hover:text-primary-light flex items-center gap-2 font-medium transition-colors"
+              >
+                <span>View All in Jobs</span>
+                <ArrowRight size={18} />
+              </a>
+            )}
           </div>
 
-          {recommendations.resources.length > 0 ? (
+          {skillGapResources.length > 0 ? (
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg"
+              >
+                <p className="text-sm text-muted">
+                  <Sparkles className="inline mr-2" size={16} />
+                  Based on your skill gaps from top job matches
+                </p>
+              </motion.div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {skillGapResources.map((resource, index) => (
+                  <SkillGapResourceCard key={resource.id} resource={resource} index={index} />
+                ))}
+              </div>
+            </>
+          ) : recommendations.resources.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendations.resources.slice(0, 3).map((resource) => (
                 <ResourceCard key={resource._id} resource={resource} />
@@ -585,6 +679,53 @@ const ResourceCard = ({ resource }) => (
       </div>
     )}
   </a>
+);
+
+// Skill Gap Resource Card Component
+const SkillGapResourceCard = ({ resource, index }) => (
+  <motion.a
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
+    href={resource.link}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="neon-card p-6 hover:shadow-xl transition-all hover:-translate-y-2 block group"
+  >
+    <div className="flex items-start justify-between mb-3">
+      <h3 className="font-semibold text-main group-hover:text-primary transition-colors line-clamp-2">
+        {resource.title}
+      </h3>
+      <span className={`px-2 py-1 text-xs font-medium rounded whitespace-nowrap ml-2 ${
+        resource.type === 'Free' 
+          ? 'bg-green-500/20 text-green-400' 
+          : 'bg-[rgba(213,0,249,0.1)] text-accent-pink'
+      }`}>
+        {resource.type}
+      </span>
+    </div>
+    
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-xs text-muted">{resource.platform}</span>
+      {resource.duration && (
+        <>
+          <span className="text-muted">•</span>
+          <span className="text-xs text-muted">{resource.duration}</span>
+        </>
+      )}
+    </div>
+
+    <div className="flex flex-wrap gap-2">
+      {resource.tags?.slice(0, 3).map((tag, idx) => (
+        <span 
+          key={idx} 
+          className="text-xs px-2 py-1 bg-purple-500/10 text-purple-300 rounded"
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  </motion.a>
 );
 
 export default Dashboard;
