@@ -22,12 +22,12 @@ import Resources from "./pages/Resources";
 import LearningResources from "./pages/LearningResources";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Chatassistance from "./pages/chatassistance";
 import CareerRoadmap from "./pages/CareerRoadmap";
+import CvUpload from "./pages/CvUpload";
 import AdminPanel from "./pages/AdminPanel";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -66,6 +66,7 @@ function AppContent() {
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/chatassistance" element={<ProtectedRoute><Chatassistance /></ProtectedRoute>} />
+            <Route path="/cv-upload" element={<ProtectedRoute><CvUpload /></ProtectedRoute>} />
             <Route path="/career-roadmap" element={<ProtectedRoute><CareerRoadmap /></ProtectedRoute>} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
