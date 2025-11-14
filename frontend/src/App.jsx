@@ -7,7 +7,6 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { CursorEffect } from './cursor';
 
 // Components
 import Navbar from "./components/Navbar";
@@ -25,6 +24,7 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Register from "./pages/Register";
+import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import ChatBot from "./pages/ChatBot";
 import AdminPanel from "./pages/AdminPanel";
@@ -41,7 +41,6 @@ function AppContent() {
 
   return (
     <div className="App">
-      <CursorEffect />
       {/* Show navbar only for non-admin routes */}
       {!isAdminRoute && <Navbar />}
       {/* Add padding-top to account for fixed navbar only for non-admin routes */}
@@ -58,6 +57,7 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/signup" element={<Register />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/chatbot" element={<ProtectedRoute><ChatBot /></ProtectedRoute>} />
             <Route path="/admin-login" element={<AdminLogin />} />

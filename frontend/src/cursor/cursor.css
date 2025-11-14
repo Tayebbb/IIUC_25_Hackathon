@@ -1,6 +1,6 @@
-/* Hide default cursor on elements that should use custom cursor */
+/* Default cursor restored */
 * {
-  cursor: none !important;
+  cursor: auto;
 }
 
 /* Main cursor ring - HIDDEN */

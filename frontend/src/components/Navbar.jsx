@@ -211,6 +211,23 @@ const Navbar = () => {
 
                       {/* Menu Items */}
                       <div className="py-2">
+                        {/* Profile Option */}
+                        <Link
+                          to="/profile"
+                          onClick={() => setShowUserMenu(false)}
+                          className="flex items-center space-x-3 px-4 py-3 hover:bg-[rgba(168,85,247,0.06)] transition-all duration-150 group"
+                        >
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-150" style={{background:'rgba(168,85,247,0.06)'}}>
+                            <User size={16} className="text-primary glow-icon" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium" style={{color:'#FFFFFF'}}>Profile</p>
+                            <p className="text-xs text-muted">
+                              Manage your account
+                            </p>
+                          </div>
+                        </Link>
+
                         {/* Logout Option */}
                         <button
                           onClick={() => {
