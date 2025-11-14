@@ -127,14 +127,13 @@ async def summarize_cv(file: UploadFile = File(...)):
         
         # Call Gemini to analyze the CV
         prompt = (
-            "You are an expert CV analyzer. "
-            "Summarize the key skills, experience, and strengths from this CV. "
-            "Provide a comprehensive analysis including:\n"
-            "1. Professional Summary\n"
-            "2. Key Skills\n"
-            "3. Work Experience Highlights\n"
-            "4. Education\n"
-            "5. Notable Achievements\n\n"
+            "You are an expert CV analyzer. Extract and list ONLY the following from this CV:\n\n"
+            "1. **Key Skills**: List all technical and soft skills mentioned\n"
+            "2. **Tools & Technologies**: List all programming languages, frameworks, software, platforms, and tools\n"
+            "3. **Relevant Roles**: List job titles and positions held\n"
+            "4. **Domains**: List industry domains and areas of expertise (e.g., Web Development, Data Science, Healthcare, Finance, etc.)\n\n"
+            "Format the output in a clear, structured manner with bullet points.\n"
+            "Be concise and extract only what is explicitly mentioned in the CV.\n\n"
             "CV Content:\n\n" + full_text
         )
         
