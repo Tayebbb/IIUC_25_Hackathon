@@ -1,6 +1,6 @@
 /**
  * Register Page
- * New user registration with profile setup + Firestore ChatBot doc creation
+ * New user registration with profile setup + Firestore ChatBot doc creation + Interest Selection
  */
 
 import { useState, useEffect } from 'react';
@@ -15,6 +15,7 @@ import {
   Briefcase,
   Target,
   LogOut,
+  Heart,
 } from 'lucide-react';
 
 // 🔥 Firebase imports
@@ -60,10 +61,23 @@ const Register = () => {
     experienceLevel: 'Student',
     careerTrack: 'Web Development',
   });
+  // NEW: State for selected interests
+  const [selectedInterests, setSelectedInterests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // NEW: Available interest topics
+  const interestTopics = [
+    'Artificial Intelligence',
+    'Machine Learning',
+    'Data Science',
+    'Web Development',
+    'Digital Marketing',
+    'Cybersecurity',
+    'Agentic Ai',
+  ];
 
   // Listen for auth state changes (logged-in user)
   useEffect(() => {
@@ -87,6 +101,22 @@ const Register = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // NEW: Handle interest checkbox selection (max 3)
+  const handleInterestToggle = (interest) => {
+    setSelectedInterests((prev) => {
+      if (prev.includes(interest)) {
+        // Remove if already selected
+        return prev.filter((item) => item !== interest);
+      } else {
+        // Add only if less than 3 are selected
+        if (prev.length < 3) {
+          return [...prev, interest];
+        }
+        return prev;
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -94,6 +124,12 @@ const Register = () => {
     // Basic validation
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    // NEW: Validate interests selection
+    if (selectedInterests.length !== 3) {
+      setError('Please select exactly 3 topics of interest.');
       return;
     }
 
@@ -118,11 +154,11 @@ const Register = () => {
       }
 
       // 3️⃣ Create Firestore document in collection "ChatBot" with doc ID = email
-      const docRef = doc(db, 'ChatBot', formData.email);
+      const chatBotDocRef = doc(db, 'ChatBot', formData.email);
       console.log('Writing Firestore doc at ChatBot/' + formData.email);
 
       await setDoc(
-        docRef,
+        chatBotDocRef,
         {
           email: formData.email,
           name: formData.name,
@@ -136,7 +172,27 @@ const Register = () => {
 
       console.log('ChatBot document successfully created for:', formData.email);
 
-      // 4️⃣ Redirect to dashboard
+      // 4️⃣ NEW: Create document in "All_User" collection with subcollection "Interest"
+      // Structure: All_User/{email}/Interest/interest
+      const interestDocRef = doc(
+        db,
+        'All_User',
+        formData.email,
+        'Interest',
+        'interest'
+      );
+
+      await setDoc(interestDocRef, {
+        Topic_1: selectedInterests[0] || '',
+        Topic_2: selectedInterests[1] || '',
+        Topic_3: selectedInterests[2] || '',
+        createdAt: serverTimestamp(),
+      });
+
+      console.log('Interest document successfully created for:', formData.email);
+      console.log('Selected interests:', selectedInterests);
+
+      // 5️⃣ Redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
       console.error('Registration / Firestore error:', error);
@@ -360,6 +416,48 @@ const Register = () => {
                 </select>
               </div>
             </div>
+
+            {/* ==================== NEW SECTION: Interest Selection ==================== */}
+            <div className="border-t pt-6">
+              <label className="block text-sm font-medium mb-3">
+                <Heart className="inline mr-1" size={16} />
+                Select Your Topics of Interest * (Choose exactly 3)
+              </label>
+              <p className="text-xs text-text-muted mb-4">
+                Selected: {selectedInterests.length}/3
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {interestTopics.map((topic) => {
+                  const isSelected = selectedInterests.includes(topic);
+                  const isDisabled = !isSelected && selectedInterests.length >= 3;
+                  
+                  return (
+                    <label
+                      key={topic}
+                      className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-primary/10 border-primary'
+                          : isDisabled
+                          ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
+                          : 'bg-white border-gray-300 hover:border-primary/50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleInterestToggle(topic)}
+                        disabled={isDisabled}
+                        className="w-4 h-4 text-primary rounded focus:ring-primary"
+                      />
+                      <span className={`text-sm ${isSelected ? 'font-medium text-primary' : ''}`}>
+                        {topic}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            {/* ==================== END NEW SECTION ==================== */}
 
             {/* Submit Button */}
             <button

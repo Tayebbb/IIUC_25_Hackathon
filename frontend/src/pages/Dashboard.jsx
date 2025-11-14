@@ -1,110 +1,339 @@
-/**
- * Dashboard Page
- * User dashboard with profile summary and recommendations
- */
-
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Briefcase, BookOpen, TrendingUp, ArrowRight } from 'lucide-react';
-import { jobsService, applicationsService } from '../services/firestoreService';
-import { useAuth } from '../contexts/AuthContext';
-import toast from 'react-hot-toast';
+import { User, Briefcase, BookOpen, TrendingUp, ArrowRight, GraduationCap, CheckCircle, Sparkles } from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyC8za3ZI4m9gUrYsueUum907vpuKzV8H0Q",
+  authDomain: "iiuc25.firebaseapp.com",
+  projectId: "iiuc25",
+  storageBucket: "iiuc25.firebasestorage.app",
+  messagingSenderId: "75690391713",
+  appId: "1:75690391713:web:4c72c5316547c8bc68d8e0",
+  measurementId: "G-82V42TWJ9J"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const [recommendations, setRecommendations] = useState({ jobs: [], resources: [] });
+  const [currentUser, setCurrentUser] = useState(null);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [recommendedCourses, setRecommendedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recommendations] = useState({ jobs: [], resources: [] });
 
+  // Monitor authentication state
   useEffect(() => {
-    fetchRecommendations();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        fetchEnrolledCourses(user.email);
+        fetchRecommendedCourses(user.email);
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
-  const fetchRecommendations = async () => {
+  // Fetch courses where user is enrolled
+  const fetchEnrolledCourses = async (userEmail) => {
     try {
-      const response = await api.get(`/recommendations/${user._id}`);
-      setRecommendations(response.data.recommendations);
+      const coursesRef = collection(db, 'Courses');
+      const snapshot = await getDocs(coursesRef);
+      
+      const userCourses = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        
+        // Check all enrollment fields for user's email
+        const isEnrolled = Object.keys(data).some(key => 
+          key.startsWith('Enrollment_') && data[key] === userEmail
+        );
+
+        if (isEnrolled) {
+          userCourses.push({
+            id: doc.id,
+            name: doc.id,
+            overview: data.Overview || 'No overview available',
+            outline: data.Outline || 'No outline available',
+            image: data.Image_1 || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
+            enrollmentCount: Object.keys(data).filter(k => k.startsWith('Enrollment_')).length
+          });
+        }
+      });
+
+      setEnrolledCourses(userCourses);
     } catch (error) {
-      toast.error('Failed to load recommendations');
+      console.error('Error fetching enrolled courses:', error);
+    }
+  };
+
+  // Fetch recommended courses based on user interests
+  const fetchRecommendedCourses = async (userEmail) => {
+    try {
+      setLoading(true);
+
+      // 1. Fetch user's interests from All_User/{email}/Interest/interest
+      const interestDocRef = doc(db, 'All_User', userEmail, 'Interest', 'interest');
+      const interestDoc = await getDoc(interestDocRef);
+
+      if (!interestDoc.exists()) {
+        console.log('No interests found for user');
+        setLoading(false);
+        return;
+      }
+
+      const interestData = interestDoc.data();
+      const userInterests = [
+        interestData.Topic_1,
+        interestData.Topic_2,
+        interestData.Topic_3
+      ].filter(Boolean); // Remove empty values
+
+      console.log('User interests:', userInterests);
+
+      // 2. Fetch all courses
+      const coursesRef = collection(db, 'Courses');
+      const coursesSnapshot = await getDocs(coursesRef);
+
+      const allCourses = [];
+      coursesSnapshot.forEach((doc) => {
+        const data = doc.data();
+        allCourses.push({
+          id: doc.id,
+          name: doc.id,
+          overview: data.Overview || 'No overview available',
+          outline: data.Outline || 'No outline available',
+          image: data.Image_1 || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
+          enrollmentCount: Object.keys(data).filter(k => k.startsWith('Enrollment_')).length
+        });
+      });
+
+      // 3. Match courses with user interests
+      const matchedCourses = allCourses
+        .map(course => {
+          let matchScore = 0;
+          let matchedInterest = '';
+
+          // Check if course name matches any user interest
+          userInterests.forEach(interest => {
+            if (!interest) return;
+
+            const interestWords = interest.toLowerCase().split(' ');
+            const courseName = course.name.toLowerCase();
+
+            // Check for full interest match
+            if (courseName.includes(interest.toLowerCase())) {
+              matchScore += 10;
+              matchedInterest = interest;
+              return;
+            }
+
+            // Check for partial word matches (first 1-2 words)
+            interestWords.slice(0, 2).forEach(word => {
+              if (word.length > 2 && courseName.includes(word)) {
+                matchScore += 5;
+                if (!matchedInterest) matchedInterest = interest;
+              }
+            });
+          });
+
+          return {
+            ...course,
+            matchScore,
+            matchedInterest
+          };
+        })
+        .filter(course => course.matchScore > 0) // Only courses with matches
+        .sort((a, b) => b.matchScore - a.matchScore) // Sort by match score
+        .slice(0, 3); // Take top 3
+
+      console.log('Matched courses:', matchedCourses);
+      setRecommendedCourses(matchedCourses);
+    } catch (error) {
+      console.error('Error fetching recommended courses:', error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="page-padding bg-bg-muted dark:bg-gray-900">
-      <div className="section-container">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="font-heading text-3xl sm:text-4xl font-bold mb-2">
-            Welcome back, {user?.name?.split(' ')[0]}! 👋
+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Welcome back, {currentUser?.displayName?.split(' ')[0] || currentUser?.email?.split('@')[0] || 'Guest'}! 👋
           </h1>
-          <p className="text-text-muted">Here's what's happening with your career journey</p>
+          <p className="text-gray-600">
+            Here's what's happening with your career journey
+          </p>
         </motion.div>
 
         {/* Profile Summary Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <StatCard icon={User} label="Profile Completion" value="75%" color="bg-blue-500" />
-          <StatCard icon={Briefcase} label="Matched Jobs" value={recommendations.jobs.length} color="bg-primary" />
-          <StatCard icon={BookOpen} label="Recommended Resources" value={recommendations.resources.length} color="bg-purple-500" />
-          <StatCard icon={TrendingUp} label="Skills" value={user?.skills?.length || 0} color="bg-orange-500" />
+          <StatCard 
+            icon={User} 
+            label="Profile Completion" 
+            value="75%" 
+            color="bg-gradient-to-br from-blue-500 to-blue-600" 
+          />
+          <StatCard 
+            icon={Briefcase} 
+            label="Matched Jobs" 
+            value={recommendations.jobs.length} 
+            color="bg-gradient-to-br from-green-500 to-green-600" 
+          />
+          <StatCard 
+            icon={GraduationCap} 
+            label="Enrolled Courses" 
+            value={enrolledCourses.length} 
+            color="bg-gradient-to-br from-purple-500 to-purple-600" 
+          />
+          <StatCard 
+            icon={TrendingUp} 
+            label="Recommendations" 
+            value={recommendedCourses.length} 
+            color="bg-gradient-to-br from-orange-500 to-orange-600" 
+          />
         </div>
+
+        {/* Recommended Courses Section - NEW */}
+        {recommendedCourses.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Sparkles className="text-yellow-500" size={28} />
+                <h2 className="text-2xl font-bold">Recommended For You</h2>
+              </div>
+              <button className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium transition-colors">
+                <span>View All Courses</span>
+                <ArrowRight size={18} />
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recommendedCourses.map((course, index) => (
+                <RecommendedCourseCard key={course.id} course={course} index={index} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Enrolled Courses Section */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <GraduationCap className="text-purple-600" size={28} />
+              <h2 className="text-2xl font-bold">My Enrolled Courses</h2>
+            </div>
+            <button className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium transition-colors">
+              <span>Browse All Courses</span>
+              <ArrowRight size={18} />
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent"></div>
+            </div>
+          ) : enrolledCourses.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {enrolledCourses.map((course, index) => (
+                <CourseCard key={course.id} course={course} index={index} />
+              ))}
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-12 text-center"
+            >
+              <GraduationCap className="mx-auto text-gray-300 mb-4" size={64} />
+              <p className="text-gray-600 text-lg mb-4">
+                You haven't enrolled in any courses yet
+              </p>
+              <button className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-medium">
+                <BookOpen size={20} />
+                Explore Courses
+              </button>
+            </motion.div>
+          )}
+        </section>
 
         {/* Recommended Jobs */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-2xl font-bold">Recommended Jobs for You</h2>
-            <Link to="/jobs" className="text-primary hover:text-primary-dark flex items-center space-x-1">
+            <div className="flex items-center gap-3">
+              <Briefcase className="text-green-600" size={28} />
+              <h2 className="text-2xl font-bold">Recommended Jobs for You</h2>
+            </div>
+            <button className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium transition-colors">
               <span>View All</span>
-              <ArrowRight size={16} />
-            </Link>
+              <ArrowRight size={18} />
+            </button>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          ) : recommendations.jobs.length > 0 ? (
+          {recommendations.jobs.length > 0 ? (
             <div className="grid md:grid-cols-2 gap-6">
               {recommendations.jobs.slice(0, 4).map((job) => (
                 <JobCard key={job._id} job={job} />
               ))}
             </div>
           ) : (
-            <div className="card p-12 text-center">
-              <p className="text-text-muted">
-                No job recommendations yet. <Link to="/profile" className="text-primary">Update your skills</Link> to get personalized matches!
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-12 text-center"
+            >
+              <Briefcase className="mx-auto text-gray-300 mb-4" size={64} />
+              <p className="text-gray-600">
+                No job recommendations yet. <span className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer">Update your skills</span> to get personalized matches!
               </p>
-            </div>
+            </motion.div>
           )}
         </section>
 
         {/* Recommended Resources */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-2xl font-bold">Learning Resources</h2>
-            <Link to="/resources" className="text-primary hover:text-primary-dark flex items-center space-x-1">
+            <div className="flex items-center gap-3">
+              <BookOpen className="text-blue-600" size={28} />
+              <h2 className="text-2xl font-bold">Learning Resources</h2>
+            </div>
+            <button className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium transition-colors">
               <span>View All</span>
-              <ArrowRight size={16} />
-            </Link>
+              <ArrowRight size={18} />
+            </button>
           </div>
 
-          {!loading && recommendations.resources.length > 0 ? (
+          {recommendations.resources.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendations.resources.slice(0, 3).map((resource) => (
                 <ResourceCard key={resource._id} resource={resource} />
               ))}
             </div>
           ) : (
-            !loading && (
-              <div className="card p-12 text-center">
-                <p className="text-text-muted">No resource recommendations available</p>
-              </div>
-            )
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-12 text-center"
+            >
+              <BookOpen className="mx-auto text-gray-300 mb-4" size={64} />
+              <p className="text-gray-600">No resource recommendations available</p>
+            </motion.div>
           )}
         </section>
       </div>
@@ -117,39 +346,168 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
-    className="card p-6"
+    whileHover={{ scale: 1.05 }}
+    className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all cursor-pointer"
   >
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm text-text-muted mb-1">{label}</p>
-        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-sm text-gray-600 mb-1">{label}</p>
+        <p className="text-3xl font-bold text-gray-800">{value}</p>
       </div>
-      <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center`}>
-        <Icon className="text-white" size={24} />
+      <div className={`w-14 h-14 ${color} rounded-xl flex items-center justify-center shadow-lg`}>
+        <Icon className="text-white" size={28} />
       </div>
+    </div>
+  </motion.div>
+);
+
+// Recommended Course Card Component - NEW
+const RecommendedCourseCard = ({ course, index }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
+    whileHover={{ y: -8 }}
+    className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all group cursor-pointer relative"
+  >
+    {/* Recommended Badge */}
+    <div className="absolute top-4 left-4 z-10">
+      <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-lg">
+        <Sparkles size={14} />
+        Recommended
+      </span>
+    </div>
+
+    {/* Course Image */}
+    <div className="relative h-48 overflow-hidden">
+      <img
+        src={course.image}
+        alt={course.name}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        onError={(e) => {
+          e.target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      <div className="absolute bottom-4 left-4 right-4">
+        <h3 className="text-white text-xl font-bold line-clamp-2 drop-shadow-lg">
+          {course.name}
+        </h3>
+      </div>
+    </div>
+
+    {/* Course Content */}
+    <div className="p-6">
+      {/* Match Reason */}
+      {course.matchedInterest && (
+        <div className="mb-3 flex items-center gap-2 text-xs bg-yellow-50 text-yellow-700 px-3 py-2 rounded-lg">
+          <Sparkles size={14} />
+          <span>Matches your interest in <strong>{course.matchedInterest}</strong></span>
+        </div>
+      )}
+
+      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+        {course.overview}
+      </p>
+
+      {/* Course Stats */}
+      <div className="flex items-center justify-between text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <User size={16} />
+          <span>{course.enrollmentCount} students</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <BookOpen size={16} />
+          <span>Available</span>
+        </div>
+      </div>
+
+      {/* Action Button */}
+      <button className="w-full text-center bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 px-4 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-medium shadow-lg hover:shadow-xl">
+        Enroll Now
+      </button>
+    </div>
+  </motion.div>
+);
+
+// Course Card Component
+const CourseCard = ({ course, index }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
+    whileHover={{ y: -8 }}
+    className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all group cursor-pointer"
+  >
+    {/* Course Image */}
+    <div className="relative h-48 overflow-hidden">
+      <img
+        src={course.image}
+        alt={course.name}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        onError={(e) => {
+          e.target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      <div className="absolute top-4 right-4">
+        <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-lg">
+          <CheckCircle size={14} />
+          Enrolled
+        </span>
+      </div>
+      <div className="absolute bottom-4 left-4 right-4">
+        <h3 className="text-white text-xl font-bold line-clamp-2 drop-shadow-lg">
+          {course.name}
+        </h3>
+      </div>
+    </div>
+
+    {/* Course Content */}
+    <div className="p-6">
+      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+        {course.overview}
+      </p>
+
+      {/* Course Stats */}
+      <div className="flex items-center justify-between text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <User size={16} />
+          <span>{course.enrollmentCount} students</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <BookOpen size={16} />
+          <span>In Progress</span>
+        </div>
+      </div>
+
+      {/* Action Button */}
+      <button className="w-full text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-medium shadow-lg hover:shadow-xl">
+        Continue Learning
+      </button>
     </div>
   </motion.div>
 );
 
 // Job Card Component
 const JobCard = ({ job }) => (
-  <Link to={`/jobs/${job._id}`} className="card p-6 hover:shadow-lift transition-all">
+  <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer">
     <div className="flex items-start justify-between mb-3">
       <div>
-        <h3 className="font-semibold text-lg mb-1">{job.title}</h3>
-        <p className="text-sm text-text-muted">{job.company} • {job.location}</p>
+        <h3 className="font-semibold text-lg mb-1 text-gray-800">{job.title}</h3>
+        <p className="text-sm text-gray-600">{job.company} • {job.location}</p>
       </div>
-      <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
+      <span className="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-medium rounded-full">
         {job.type}
       </span>
     </div>
-    <p className="text-sm text-text-muted mb-3 line-clamp-2">{job.description}</p>
+    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{job.description}</p>
     {job.matchReason && (
-      <div className="text-xs text-primary bg-primary/5 px-3 py-2 rounded-lg">
+      <div className="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
         ✓ {job.matchReason}
       </div>
     )}
-  </Link>
+  </div>
 );
 
 // Resource Card Component
@@ -158,19 +516,21 @@ const ResourceCard = ({ resource }) => (
     href={resource.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="card p-6 hover:shadow-lift transition-all"
+    className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1 block"
   >
     <div className="flex items-start justify-between mb-3">
-      <h3 className="font-semibold mb-1">{resource.title}</h3>
+      <h3 className="font-semibold mb-1 text-gray-800">{resource.title}</h3>
       <span className={`px-2 py-1 text-xs font-medium rounded ${
-        resource.cost === 'Free' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+        resource.cost === 'Free' 
+          ? 'bg-green-100 text-green-700' 
+          : 'bg-orange-100 text-orange-700'
       }`}>
         {resource.cost}
       </span>
     </div>
-    <p className="text-sm text-text-muted mb-3">{resource.platform}</p>
+    <p className="text-sm text-gray-600 mb-3">{resource.platform}</p>
     {resource.matchReason && (
-      <div className="text-xs text-primary bg-primary/5 px-3 py-2 rounded-lg">
+      <div className="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
         {resource.matchReason}
       </div>
     )}
