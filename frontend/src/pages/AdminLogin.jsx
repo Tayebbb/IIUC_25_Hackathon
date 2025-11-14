@@ -30,7 +30,7 @@ const AdminLogin = () => {
         setIsAuthenticated(true);
         // Auto-redirect if already logged in as admin
         const timer = setTimeout(() => {
-          navigate('/admin');
+          navigate('/admin-dashboard');
         }, 1500);
         return () => clearTimeout(timer);
       }
@@ -64,9 +64,9 @@ const AdminLogin = () => {
         toast.success('Admin login successful!');
         setIsAuthenticated(true);
         
-        // Redirect to admin panel after a short delay
+        // Redirect to admin dashboard after a short delay
         setTimeout(() => {
-          navigate('/admin');
+          navigate('/admin-dashboard');
         }, 500);
       } else {
         await auth.signOut();
