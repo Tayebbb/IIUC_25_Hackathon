@@ -9,6 +9,7 @@ import { Plus, Briefcase, Edit, Trash2, X, Save, Building2, DollarSign, MapPin, 
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { JOB_TITLES, CAREER_TRACKS, EXPERIENCE_LEVELS, LOCATIONS } from '../constants/jobConstants';
 import { searchSkills } from '../constants/skillsDictionary';
@@ -224,22 +225,23 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold glow-text mb-2">Admin Panel</h1>
-            <p className="text-muted">Manage job postings</p>
+    <AdminLayout>
+      <div className="py-8 px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-4xl font-bold glow-text mb-2">Jobs Management</h1>
+              <p className="text-muted">Create, edit, and manage job postings</p>
+            </div>
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-primary px-6 py-3 flex items-center gap-2 whitespace-nowrap"
+            >
+              <Plus size={20} />
+              Post New Job
+            </button>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn-primary px-6 py-3 flex items-center gap-2"
-          >
-            <Plus size={20} />
-            Post New Job
-          </button>
-        </div>
 
         {/* Job Form Modal */}
         <AnimatePresence>
@@ -594,8 +596,9 @@ const AdminPanel = () => {
             ))}
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

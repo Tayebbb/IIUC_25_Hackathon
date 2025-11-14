@@ -25,26 +25,31 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Register from "./pages/Register";
-import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import ChatBot from "./pages/ChatBot";
 import AdminPanel from "./pages/AdminPanel";
 import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function AppContent() {
   const location = useLocation();
   const { currentUser } = useAuth();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  // Check if current user is admin
+  const isAdmin = currentUser?.email === 'admin@gmail.com';
 
   return (
     <div className="App">
       <CursorEffect />
-      <Navbar />
-      {/* Add padding-top to account for fixed navbar */}
-      <div className="pt-20">
+      {/* Show navbar only for non-admin routes */}
+      {!isAdminRoute && <Navbar />}
+      {/* Add padding-top to account for fixed navbar only for non-admin routes */}
+      <div className={!isAdminRoute ? 'pt-20' : ''}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            {/* Redirect authenticated users from home to dashboard */}
-            <Route path="/" element={currentUser ? <Navigate to="/dashboard" replace /> : <Home />} />
+            {/* Home route - show home page or redirect if logged in */}
+            <Route path="/" element={<Home />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/match" element={<ProtectedRoute><JobMatchPage /></ProtectedRoute>} />
             <Route path="/jobs/:id" element={<JobDetails />} />
@@ -53,15 +58,16 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/signup" element={<Register />} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/chatbot" element={<ProtectedRoute><ChatBot /></ProtectedRoute>} />
             <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminProtectedRoute><AdminPanel /></AdminProtectedRoute>} />
+            <Route path="/admin-dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin/jobs" element={<AdminProtectedRoute><AdminPanel /></AdminProtectedRoute>} />
           </Routes>
         </AnimatePresence>
       </div>
-      <Footer />
+      {/* Show footer only for non-admin routes */}
+      {!isAdminRoute && <Footer />}
       <Toaster position="top-right" />
     </div>
   );

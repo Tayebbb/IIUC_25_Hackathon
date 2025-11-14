@@ -52,7 +52,7 @@ const Login = () => {
       if (loginType === 'user') {
         navigate('/dashboard');
       } else if (loginType === 'admin') {
-        navigate('/admin');
+        navigate('/admin-dashboard');
       }
     } catch (error) {
       setError('Failed to log in: ' + error.message);
