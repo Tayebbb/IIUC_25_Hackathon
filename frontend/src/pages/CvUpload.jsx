@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, FileText, Sparkles, CheckCircle, AlertCircle, Loader, Save } from "lucide-react";
+import { Upload, FileText, Sparkles, CheckCircle, AlertCircle, Loader, Save, Lightbulb } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../firebase";
@@ -15,6 +15,8 @@ export default function CvUpload() {
   const [error, setError] = useState("");
   const [showRawText, setShowRawText] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [skillsSuggestion, setSkillsSuggestion] = useState(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -31,6 +33,92 @@ export default function CvUpload() {
     }
   };
 
+  const getHotSkillsSuggestion = async (cvAnalysis) => {
+    try {
+      setLoadingSuggestion(true);
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        console.warn("Gemini API key not configured");
+        return;
+      }
+
+      const prompt = `Based on this CV analysis, suggest exactly 2 hot/trending skills that would make this person MORE marketable but are currently MISSING from their profile. 
+
+Current Skills: ${cvAnalysis.keySkills?.join(", ") || "None"}
+Tools & Tech: ${cvAnalysis.toolsTechnologies?.join(", ") || "None"}
+Roles: ${cvAnalysis.rolesAndDomains?.join(", ") || "None"}
+
+Respond in EXACTLY 2 lines. Each line should have one skill with a brief reason.
+Format: "Skill Name - Why it's important for their profile"
+Keep it SHORT and concise.`;
+
+      // Retry logic with exponential backoff
+      let retries = 3;
+      let lastError = null;
+
+      while (retries > 0) {
+        try {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      {
+                        text: prompt,
+                      },
+                    ],
+                  },
+                ],
+              }),
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            const suggestion = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (suggestion) {
+              setSkillsSuggestion(suggestion);
+              return;
+            }
+          } else if (response.status === 429) {
+            // Rate limited - wait and retry
+            lastError = "API rate limited. Retrying...";
+            retries--;
+            if (retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 2000 * (4 - retries))); // Exponential backoff
+              continue;
+            }
+          } else {
+            lastError = `API error: ${response.status}`;
+            break;
+          }
+        } catch (err) {
+          lastError = err.message;
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000 * (4 - retries)));
+            continue;
+          }
+        }
+      }
+
+      if (lastError) {
+        console.warn("Could not get skills suggestion:", lastError);
+      }
+    } catch (err) {
+      console.error("Error getting Gemini suggestion:", err);
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) {
       setError("Please select a PDF file first.");
@@ -41,6 +129,7 @@ export default function CvUpload() {
     setError("");
     setCvData(null);
     setRawText("");
+    setSkillsSuggestion(null);
 
     try {
       const formData = new FormData();
@@ -59,6 +148,9 @@ export default function CvUpload() {
       const data = await res.json();
       setCvData(data.data);
       setRawText(data.raw_text);
+      
+      // Get Gemini suggestion for hot skills
+      await getHotSkillsSuggestion(data.data);
     } catch (err) {
       console.error("Error:", err);
       setError(err.message || "Failed to process CV. Please try again.");
@@ -309,6 +401,53 @@ export default function CvUpload() {
                 </motion.div>
               )}
             </div>
+
+            {/* Hot Skills Suggestion */}
+            {skillsSuggestion && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  margin: "0 2rem",
+                  padding: "1.5rem",
+                  background: "linear-gradient(135deg, rgba(168,85,247,0.1), rgba(59,130,246,0.1))",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(168,85,247,0.25)",
+                  boxShadow: "0 4px 12px rgba(168,85,247,0.15)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
+                  <Lightbulb size={24} style={{ color: "#A855F7", marginTop: "2px", flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: "1.125rem", fontWeight: "600", color: "#FFFFFF", margin: "0 0 0.75rem 0" }}>
+                      🚀 Hot Skills to Learn Now
+                    </h3>
+                    <div style={{ color: "#CBD5E1", fontSize: "0.95rem", lineHeight: "1.6", whiteSpace: "pre-line" }}>
+                      {skillsSuggestion}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {loadingSuggestion && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  margin: "0 2rem",
+                  padding: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.75rem",
+                  color: "#A855F7",
+                }}
+              >
+                <Loader size={18} style={{ animation: "spin 1s linear infinite" }} />
+                <span>Getting hot skills suggestions...</span>
+              </motion.div>
+            )}
 
             {/* Save to Profile Button */}
             <motion.button
