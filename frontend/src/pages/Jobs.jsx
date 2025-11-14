@@ -352,65 +352,130 @@ const Jobs = () => {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="mt-12"
             >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Target size={24} className="text-white" />
-                    <h2 className="text-2xl font-bold">Your Top Matches</h2>
+              <div className="bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border-2 border-white/30 shadow-2xl">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0]
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 3
+                      }}
+                      className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg"
+                    >
+                      <Target size={28} className="text-white" />
+                    </motion.div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+                        Your Top Matches
+                        <motion.span
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="text-yellow-300"
+                        >
+                          ✨
+                        </motion.span>
+                      </h2>
+                      <p className="text-white/80 text-sm mt-1">AI-powered job recommendations just for you</p>
+                    </div>
                   </div>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-semibold">
-                    AI-Powered
-                  </span>
+                  <motion.span 
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-bold text-white shadow-lg"
+                  >
+                    🤖 AI-Powered
+                  </motion.span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {topMatches.map((job, index) => {
                     const matchLevel = getMatchLevel(job.matchScore);
                     return (
                       <motion.div
                         key={job.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 + index * 0.1 }}
+                        initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.6 + index * 0.15, type: "spring" }}
+                        whileHover={{ y: -8, scale: 1.03 }}
                         onClick={() => setSelectedJob(job)}
-                        className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-all cursor-pointer group"
+                        className="relative bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-md rounded-2xl p-5 border-2 border-white/30 hover:border-yellow-300/50 transition-all cursor-pointer group shadow-xl hover:shadow-2xl"
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-white group-hover:text-yellow-200 transition-colors line-clamp-1">
+                        {/* Rank Badge */}
+                        <div className="absolute -top-3 -left-3 w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-4 border-purple-900">
+                          #{index + 1}
+                        </div>
+                        
+                        {/* Match Percentage - Large and Prominent */}
+                        <motion.div 
+                          animate={{ 
+                            scale: [1, 1.1, 1],
+                          }}
+                          transition={{ 
+                            duration: 1.5,
+                            repeat: Infinity,
+                            repeatDelay: 2
+                          }}
+                          className="absolute -top-3 -right-3"
+                        >
+                          <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transform rotate-12 group-hover:rotate-0 transition-transform ${
+                            job.matchScore >= 80 ? 'bg-gradient-to-br from-green-400 to-emerald-500' :
+                            job.matchScore >= 60 ? 'bg-gradient-to-br from-blue-400 to-cyan-500' :
+                            'bg-gradient-to-br from-yellow-400 to-orange-500'
+                          }`}>
+                            <div className="text-center">
+                              <div className="text-2xl font-black text-white leading-none">{job.matchScore}</div>
+                              <div className="text-[10px] font-bold text-white/90">MATCH</div>
+                            </div>
+                          </div>
+                        </motion.div>
+
+                        <div className="pt-4 mt-2">
+                          <div className="flex-1 mb-4">
+                            <h3 className="font-bold text-lg text-white group-hover:text-yellow-200 transition-colors line-clamp-1 mb-1">
                               {job.title}
                             </h3>
-                            <p className="text-sm text-white/70 line-clamp-1">{job.company}</p>
-                          </div>
-                          <div className={`ml-2 px-2 py-1 rounded-lg text-xs font-bold ${
-                            job.matchScore >= 80 ? 'bg-green-500/30 text-green-200' :
-                            job.matchScore >= 60 ? 'bg-blue-500/30 text-blue-200' :
-                            'bg-yellow-500/30 text-yellow-200'
-                          }`}>
-                            {job.matchScore}%
+                            <p className="text-sm text-white/80 line-clamp-1 flex items-center gap-1">
+                              <Building2 size={14} />
+                              {job.company}
+                            </p>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="flex flex-wrap gap-1.5 mb-4">
                           {job.matchDetails.matchedSkills.slice(0, 3).map((skill, idx) => (
-                            <span key={idx} className="px-2 py-0.5 bg-green-500/20 text-green-200 rounded text-xs">
-                              {skill}
-                            </span>
+                            <motion.span 
+                              key={idx}
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.7 + (index * 0.15) + (idx * 0.1) }}
+                              className="px-3 py-1 bg-gradient-to-r from-green-400/30 to-emerald-500/30 text-green-100 rounded-full text-xs font-semibold border border-green-400/30 shadow"
+                            >
+                              ✓ {skill}
+                            </motion.span>
                           ))}
                           {job.matchDetails.matchedSkills.length > 3 && (
-                            <span className="px-2 py-0.5 bg-white/10 text-white/70 rounded text-xs">
-                              +{job.matchDetails.matchedSkills.length - 3}
+                            <span className="px-3 py-1 bg-white/20 text-white rounded-full text-xs font-semibold border border-white/30">
+                              +{job.matchDetails.matchedSkills.length - 3} more
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between text-xs text-white/70">
-                          <span className="flex items-center gap-1">
-                            <Award size={12} />
+                        <div className="flex items-center justify-between pt-3 border-t border-white/20">
+                          <span className="flex items-center gap-1.5 text-sm text-white/90 font-medium">
+                            <Award size={14} className="text-yellow-300" />
                             {job.experienceRequired}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Zap size={12} className={matchLevel.textColor.replace('text-', 'text-white')} />
+                          <span className={`flex items-center gap-1.5 text-sm font-bold ${
+                            job.matchScore >= 80 ? 'text-green-300' :
+                            job.matchScore >= 60 ? 'text-blue-300' :
+                            'text-yellow-300'
+                          }`}>
+                            <Zap size={14} />
                             {matchLevel.level}
                           </span>
                         </div>

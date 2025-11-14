@@ -4,13 +4,15 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Edit, Save, X, GraduationCap, Briefcase, Target, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { userService, applicationsService } from '../services/firestoreService';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import toast from 'react-hot-toast';
+import { CAREER_TRACKS, EXPERIENCE_LEVELS, LOCATIONS } from '../constants/jobConstants';
+import { searchSkills, SKILL_CATEGORIES, getSkillsByCategory } from '../constants/skillsDictionary';
 
 const Profile = () => {
   const { currentUser } = useAuth();
@@ -20,6 +22,8 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [skillInput, setSkillInput] = useState('');
+  const [skillSuggestions, setSkillSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [formData, setFormData] = useState({
     bio: '',
@@ -145,14 +149,30 @@ const Profile = () => {
     }));
   };
 
-  const addSkill = () => {
-    const trimmed = skillInput.trim().toLowerCase();
-    if (trimmed && !formData.skills.includes(trimmed)) {
+  const addSkill = (skill = null) => {
+    const skillToAdd = skill || skillInput.trim();
+    if (skillToAdd && !formData.skills.includes(skillToAdd)) {
       setFormData(prev => ({
         ...prev,
-        skills: [...prev.skills, trimmed]
+        skills: [...prev.skills, skillToAdd]
       }));
       setSkillInput('');
+      setShowSuggestions(false);
+      setSkillSuggestions([]);
+    }
+  };
+
+  const handleSkillInputChange = (e) => {
+    const value = e.target.value;
+    setSkillInput(value);
+    
+    if (value.trim().length > 0) {
+      const suggestions = searchSkills(value);
+      setSkillSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } else {
+      setSkillSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
@@ -259,23 +279,50 @@ const Profile = () => {
                 <label className="block text-sm font-medium mb-2">
                   Skills <span className="text-red-400">*</span>
                 </label>
-                <p className="text-xs text-muted mb-2">Add your technical skills (press Enter or click Add)</p>
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="input-field flex-1"
-                    placeholder="e.g., React, JavaScript, Python..."
-                  />
-                  <button
-                    type="button"
-                    onClick={addSkill}
-                    className="btn-primary px-6"
-                  >
-                    Add
-                  </button>
+                <p className="text-xs text-muted mb-2">Add your technical skills (start typing for suggestions)</p>
+                <div className="relative">
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={skillInput}
+                      onChange={handleSkillInputChange}
+                      onKeyPress={handleKeyPress}
+                      onFocus={() => skillInput.trim() && setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      className="input-field flex-1"
+                      placeholder="Start typing: React, Python, AWS..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => addSkill()}
+                      className="btn-primary px-6"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  
+                  {/* Autocomplete Suggestions Dropdown */}
+                  <AnimatePresence>
+                    {showSuggestions && skillSuggestions.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-50 w-full bg-[#11152B] border border-primary/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto"
+                      >
+                        {skillSuggestions.map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => addSkill(suggestion)}
+                            className="w-full text-left px-4 py-2 hover:bg-primary/20 transition-colors text-main text-sm border-b border-white/5 last:border-b-0"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 {formData.skills.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -316,9 +363,9 @@ const Profile = () => {
                     required
                   >
                     <option value="">Select experience level</option>
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
+                    {EXPERIENCE_LEVELS.map(level => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -335,15 +382,10 @@ const Profile = () => {
                     className="input-field"
                     required
                   >
-                    <option value="">Select career track</option>
-                    <option value="frontend">Frontend Development</option>
-                    <option value="backend">Backend Development</option>
-                    <option value="fullstack">Full Stack Development</option>
-                    <option value="mobile">Mobile Development</option>
-                    <option value="devops">DevOps / Cloud</option>
-                    <option value="data science">Data Science / ML</option>
-                    <option value="qa">QA / Testing</option>
-                    <option value="ui/ux">UI/UX Design</option>
+                    <option value="">Select your preferred track</option>
+                    {CAREER_TRACKS.map(track => (
+                      <option key={track} value={track}>{track}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -365,14 +407,17 @@ const Profile = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Location</label>
-                  <input
-                    type="text"
+                  <select
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
                     className="input-field"
-                    placeholder="City, Country"
-                  />
+                  >
+                    <option value="">Select location</option>
+                    {LOCATIONS.map(location => (
+                      <option key={location} value={location}>{location}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

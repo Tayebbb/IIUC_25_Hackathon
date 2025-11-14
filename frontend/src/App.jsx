@@ -26,8 +26,7 @@ import Signup from "./pages/Signup";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
-import JobSeeder from "./pages/JobSeeder";
-import MigrateJobs from "./pages/MigrateJobs";
+import AdminPanel from "./pages/AdminPanel";
 
 function AppContent() {
   const location = useLocation();
@@ -53,8 +52,7 @@ function AppContent() {
             <Route path="/signup" element={<Register />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/admin/seed-jobs" element={<ProtectedRoute><JobSeeder /></ProtectedRoute>} />
-            <Route path="/admin/migrate-jobs" element={<ProtectedRoute><MigrateJobs /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
           </Routes>
         </AnimatePresence>
       </div>
