@@ -324,6 +324,27 @@ const Navbar = () => {
                     </Link>
                   </motion.div>
                 ))}
+                {currentUser && (
+                  <motion.div
+                    variants={linkVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={navLinks.length + userNavLinks.length}
+                  >
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsOpen(false)}
+                      className={`block px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                        location.pathname === '/profile'
+                          ? 'text-primary border-l-4'
+                          : 'text-muted hover:bg-[rgba(168,85,247,0.06)]'
+                      }`}
+                      style={location.pathname === '/profile' ? {background:'rgba(168,85,247,0.06)', borderColor:'#A855F7'} : {}}
+                    >
+                      Profile
+                    </Link>
+                  </motion.div>
+                )}
 
                 <div className="pt-4 border-t" style={{borderColor:'rgba(255,255,255,0.04)'}}>
                   {currentUser ? (

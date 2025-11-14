@@ -140,15 +140,16 @@ const Home = () => {
                   <motion.div
                     animate={{ y: [0, -10, 0] }}
                     transition={{ duration: 3, repeat: Infinity }}
-                    className="absolute top-10 -left-6 neon-card p-4"
+                    className="absolute top-10 -left-6 bg-[#11152B] border-2 border-primary/30 rounded-xl p-4 shadow-2xl backdrop-blur-sm"
+                    style={{boxShadow: '0 0 30px rgba(168,85,247,0.3), 0 10px 40px rgba(0,0,0,0.5)'}}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{background:'rgba(168,85,247,0.06)'}}>
-                        <TrendingUp className="text-primary" size={20} />
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-[#A855F7] to-[#D500F9]">
+                        <TrendingUp className="text-white" size={20} />
                       </div>
                       <div>
-                        <div className="text-xs text-muted">Career Growth</div>
-                        <div className="font-semibold">85% Match</div>
+                        <div className="text-xs text-muted font-medium">Career Growth</div>
+                        <div className="font-bold text-lg text-primary">85% Match</div>
                       </div>
                     </div>
                   </motion.div>
@@ -157,15 +158,16 @@ const Home = () => {
                   <motion.div
                     animate={{ y: [0, 10, 0] }}
                     transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                    className="absolute bottom-10 -right-6 neon-card p-4"
+                    className="absolute bottom-10 -right-6 bg-[#11152B] border-2 border-primary/30 rounded-xl p-4 shadow-2xl backdrop-blur-sm"
+                    style={{boxShadow: '0 0 30px rgba(168,85,247,0.3), 0 10px 40px rgba(0,0,0,0.5)'}}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{background:'rgba(168,85,247,0.06)'}}>
-                        <Award className="text-primary" size={20} />
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-[#A855F7] to-[#D500F9]">
+                        <Award className="text-white" size={20} />
                       </div>
                       <div>
-                        <div className="text-xs text-muted">Skills Gained</div>
-                        <div className="font-semibold">12 New</div>
+                        <div className="text-xs text-muted font-medium">Skills Gained</div>
+                        <div className="font-bold text-lg text-primary">12 New</div>
                       </div>
                     </div>
                   </motion.div>

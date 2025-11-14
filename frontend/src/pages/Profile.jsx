@@ -103,23 +103,23 @@ const Profile = () => {
     >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="neon-card p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#A855F7] to-[#D500F9] rounded-full flex items-center justify-center">
-                <User size={32} className="text-white" />
+        <div className="neon-card p-4 sm:p-8 mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#A855F7] to-[#D500F9] rounded-full flex items-center justify-center flex-shrink-0">
+                <User size={24} className="text-white sm:w-8 sm:h-8" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold glow-text">{currentUser?.displayName || 'User'}</h1>
-                <p className="text-muted flex items-center">
-                  <Mail size={16} className="mr-2" />
-                  {currentUser?.email}
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-3xl font-bold glow-text truncate">{currentUser?.displayName || 'User'}</h1>
+                <p className="text-muted flex items-center text-sm sm:text-base">
+                  <Mail size={14} className="mr-2 flex-shrink-0" />
+                  <span className="truncate">{currentUser?.email}</span>
                 </p>
               </div>
             </div>
             <button
               onClick={() => setEditing(!editing)}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center"
             >
               {editing ? <X size={16} /> : <Edit size={16} />}
               <span>{editing ? 'Cancel' : 'Edit Profile'}</span>

@@ -183,12 +183,12 @@ const CourseResources = () => {
       )}
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#A855F7] to-[#D500F9] text-white py-16 px-4">
+      <div className="bg-gradient-to-r from-[#A855F7] to-[#D500F9] text-white py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center animate-fade-in">
-            <BookOpen size={64} className="mx-auto mb-4 opacity-90" />
-            <h1 className="text-5xl font-bold mb-4 glow-text">Course Resources</h1>
-            <p className="text-xl opacity-90">
+            <BookOpen size={72} className="mx-auto mb-6 drop-shadow-lg" />
+            <h1 className="text-6xl font-bold mb-6 drop-shadow-lg" style={{textShadow: '0 4px 20px rgba(0,0,0,0.4)'}}>Course Resources</h1>
+            <p className="text-2xl font-medium drop-shadow-md" style={{textShadow: '0 2px 10px rgba(0,0,0,0.3)'}}>
               Explore our comprehensive collection of courses and start learning today
             </p>
           </div>
@@ -257,7 +257,7 @@ const CourseResources = () => {
 
                   {/* Course Content */}
                   <div className="p-6">
-                    <h3 className="text-2xl font-bold mb-3 text-gray-800 line-clamp-2">
+                    <h3 className="text-2xl font-bold mb-3 text-main line-clamp-2">
                       {course.name}
                     </h3>
                     
@@ -275,7 +275,7 @@ const CourseResources = () => {
                     <div className="flex gap-3">
                       <button
                         onClick={() => setSelectedCourse(course)}
-                        className="flex-1 btn-outline-neon py-3 px-4 font-medium"
+                        className="flex-1 bg-gradient-to-r from-[#7C3AED] to-[#A855F7] text-white py-3 px-4 rounded-xl hover:from-[#6D28D9] hover:to-[#9333EA] transition-all font-medium shadow-lg"
                       >
                         View Details
                       </button>
