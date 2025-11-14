@@ -33,7 +33,7 @@ const AdminLayout = ({ children }) => {
     try {
       await signOut(auth);
       toast.success('Logged out successfully');
-      navigate('/admin-login');
+      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Logout failed');
