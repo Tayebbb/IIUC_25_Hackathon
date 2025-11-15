@@ -85,18 +85,24 @@ export const applicationsService = {
 
   // Get user applications
   getUserApplications: async (userId) => {
-    const q = query(
-      collection(db, 'applications'),
-      where('userId', '==', userId)
-    );
-    const snapshot = await getDocs(q);
-    // Sort client-side to avoid needing a Firestore index
-    const applications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return applications.sort((a, b) => {
-      const dateA = a.appliedAt?.toDate?.() || new Date(0);
-      const dateB = b.appliedAt?.toDate?.() || new Date(0);
-      return dateB - dateA; // desc order
-    });
+    try {
+      const q = query(
+        collection(db, 'applications'),
+        where('userId', '==', userId)
+      );
+      const snapshot = await getDocs(q);
+      // Sort client-side to avoid needing a Firestore index
+      const applications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return applications.sort((a, b) => {
+        const dateA = a.appliedAt?.toDate?.() || new Date(0);
+        const dateB = b.appliedAt?.toDate?.() || new Date(0);
+        return dateB - dateA; // desc order
+      });
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      // Return empty array on error
+      return [];
+    }
   },
 
   // Get applications for a job
