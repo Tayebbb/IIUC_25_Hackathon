@@ -14,6 +14,7 @@ This guide will help you deploy the Career Path application to Vercel.
 ### Step 1: Deploy Frontend to Vercel
 
 1. **Push code to GitHub** (if not already done):
+
    ```bash
    git add .
    git commit -m "Prepare for deployment"
@@ -21,6 +22,7 @@ This guide will help you deploy the Career Path application to Vercel.
    ```
 
 2. **Deploy to Vercel**:
+
    - Go to [vercel.com/new](https://vercel.com/new)
    - Import your GitHub repository `IIUC_25_Version2.0`
    - Configure project:
@@ -31,6 +33,7 @@ This guide will help you deploy the Career Path application to Vercel.
      - **Install Command**: `npm install`
 
 3. **Add Environment Variables** in Vercel dashboard:
+
    ```
    VITE_FIREBASE_API_KEY=AIzaSy...
    VITE_FIREBASE_AUTH_DOMAIN=iiuc25.firebaseapp.com
@@ -46,6 +49,7 @@ This guide will help you deploy the Career Path application to Vercel.
 ### Step 2: Deploy Backend to Vercel
 
 1. **Create a new Vercel project** for the backend:
+
    - Go to [vercel.com/new](https://vercel.com/new)
    - Import the same repository
    - Configure project:
@@ -55,12 +59,14 @@ This guide will help you deploy the Career Path application to Vercel.
      - **Output Directory**: Leave empty
 
 2. **Add Environment Variables**:
+
    ```
    GEMINI_API_KEY=your_gemini_api_key
    ```
 
 3. **Update CORS in backend/main.py**:
    Replace the CORS origins with your Vercel frontend URL:
+
    ```python
    app.add_middleware(
        CORSMiddleware,
@@ -111,6 +117,7 @@ If Vercel doesn't work well for the Python backend, use Railway:
 
 Go to Firebase Console → Authentication → Settings → Authorized domains
 Add your Vercel domains:
+
 - `your-app.vercel.app`
 - `your-app-git-main.vercel.app`
 
@@ -125,6 +132,7 @@ Add your Vercel domains:
 ### 3. Set up Custom Domain (Optional)
 
 In Vercel:
+
 1. Go to **Settings** → **Domains**
 2. Add your custom domain
 3. Follow DNS configuration instructions
@@ -132,6 +140,7 @@ In Vercel:
 ## Environment Variables Summary
 
 ### Frontend (.env)
+
 ```env
 VITE_FIREBASE_API_KEY=your_key
 VITE_FIREBASE_AUTH_DOMAIN=iiuc25.firebaseapp.com
@@ -143,6 +152,7 @@ VITE_API_URL=https://your-backend-url.vercel.app
 ```
 
 ### Backend (.env)
+
 ```env
 GEMINI_API_KEY=your_gemini_api_key
 ```
@@ -150,25 +160,30 @@ GEMINI_API_KEY=your_gemini_api_key
 ## Troubleshooting
 
 ### Frontend build fails
+
 - Check if all dependencies are in `package.json`
 - Ensure Node version is 18 or higher
 - Check build logs for specific errors
 
 ### Backend deployment fails
+
 - Verify `requirements.txt` has all dependencies
 - Check Python version compatibility
 - Ensure `main.py` doesn't have syntax errors
 
 ### CORS errors
+
 - Add your frontend URL to backend CORS origins
 - Include both production and preview URLs
 
 ### API calls fail
+
 - Verify `VITE_API_URL` is set correctly
 - Check backend is running and accessible
 - Look at browser console for specific errors
 
 ### Firebase errors
+
 - Verify all Firebase environment variables are set
 - Check Firebase authorized domains include Vercel URLs
 - Ensure Firebase rules allow your operations
@@ -176,6 +191,7 @@ GEMINI_API_KEY=your_gemini_api_key
 ## Continuous Deployment
 
 Once set up, Vercel will automatically deploy:
+
 - **Production**: When you push to `main` branch
 - **Preview**: When you create a pull request
 
@@ -188,6 +204,7 @@ Once set up, Vercel will automatically deploy:
 ## Support
 
 For issues:
+
 - Vercel Docs: https://vercel.com/docs
 - Railway Docs: https://docs.railway.app
 - Firebase Docs: https://firebase.google.com/docs
