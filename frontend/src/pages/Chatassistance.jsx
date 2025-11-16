@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase";
 import { collection, doc, setDoc, getDoc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
 
 export default function Chatassistance() {
   const { currentUser } = useAuth();
@@ -359,7 +360,21 @@ export default function Chatassistance() {
                     <span style={{flex: 1}}>Out of Scope</span>
                   </div>
                 )}
-                <p style={{ margin: "0 0 12px 0", lineHeight: "1.5", wordBreak: "break-word", overflowWrap: "break-word" }}>{msg.content}</p>
+                <div style={{ margin: "0 0 12px 0", lineHeight: "1.5", wordBreak: "break-word", overflowWrap: "break-word" }}>
+                  <ReactMarkdown
+                    components={{
+                      p: ({node, ...props}) => <p style={{ margin: "8px 0" }} {...props} />,
+                      ul: ({node, ...props}) => <ul style={{ margin: "8px 0", paddingLeft: "20px" }} {...props} />,
+                      ol: ({node, ...props}) => <ol style={{ margin: "8px 0", paddingLeft: "20px" }} {...props} />,
+                      li: ({node, ...props}) => <li style={{ margin: "4px 0" }} {...props} />,
+                      strong: ({node, ...props}) => <strong style={{ fontWeight: "600", color: msg.role === "user" ? "#FFFFFF" : "#FCD34D" }} {...props} />,
+                      em: ({node, ...props}) => <em style={{ fontStyle: "italic" }} {...props} />,
+                      code: ({node, inline, ...props}) => inline ? <code style={{ backgroundColor: "rgba(0,0,0,0.2)", padding: "2px 6px", borderRadius: "4px", fontSize: "0.9em" }} {...props} /> : <code {...props} />,
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
 
                 {msg.showKeywords && (
                   <div style={styles.keywordsContainer}>
