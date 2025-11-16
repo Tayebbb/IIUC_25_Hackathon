@@ -236,9 +236,9 @@ export default function Chatassistance() {
         parts: [{ text: m.content }],
       }));
 
-      // Call Gemini API directly
+      // Call Gemini API directly with correct model name
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -259,6 +259,8 @@ export default function Chatassistance() {
       );
 
       if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Gemini API error:", res.status, errorData);
         throw new Error(`API error: ${res.status}`);
       }
 
@@ -366,11 +368,11 @@ export default function Chatassistance() {
               >
                 {msg.isRestricted && (
                   <div style={styles.restrictionWarning}>
-                    <AlertCircle size={16} />
-                    <span>Out of Scope</span>
+                    <AlertCircle size={16} style={{flexShrink: 0}} />
+                    <span style={{flex: 1}}>Out of Scope</span>
                   </div>
                 )}
-                <p style={{ margin: "0 0 12px 0", lineHeight: "1.5" }}>{msg.content}</p>
+                <p style={{ margin: "0 0 12px 0", lineHeight: "1.5", wordBreak: "break-word", overflowWrap: "break-word" }}>{msg.content}</p>
 
                 {msg.showKeywords && (
                   <div style={styles.keywordsContainer}>
@@ -446,7 +448,8 @@ export default function Chatassistance() {
 
 const styles = {
   container: {
-    maxWidth: "1000px",
+    maxWidth: "1200px",
+    width: "100%",
     margin: "0 auto",
     padding: "24px 20px",
     fontFamily: "Poppins, Inter, system-ui, sans-serif",
@@ -458,12 +461,13 @@ const styles = {
   header: {
     display: "flex",
     alignItems: "center",
-    gap: "16px",
-    padding: "20px 24px",
+    gap: "12px",
+    padding: "16px",
     background: "linear-gradient(135deg, rgba(26,27,46,0.8) 0%, rgba(19,20,31,0.9) 100%)",
     borderRadius: "16px",
     border: "1px solid rgba(168,85,247,0.25)",
     boxShadow: "0 4px 20px rgba(168,85,247,0.12)",
+    flexWrap: "wrap",
   },
   headerIcon: {
     width: "48px",
@@ -478,17 +482,19 @@ const styles = {
   title: {
     color: "#FFFFFF",
     margin: 0,
-    fontSize: "24px",
+    fontSize: "clamp(18px, 4vw, 24px)",
     fontWeight: "700",
     background: "linear-gradient(90deg, #A855F7, #D500F9)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     backgroundClip: "text",
+    wordBreak: "break-word",
   },
   subtitle: {
     color: "rgba(255,255,255,0.65)",
+    fontSize: "clamp(12px, 2.5vw, 14px)",
+    wordBreak: "break-word",
     margin: 0,
-    fontSize: "14px",
     fontWeight: "500",
   },
   chatBox: {
@@ -531,7 +537,7 @@ const styles = {
     boxShadow: "0 0 15px rgba(168,85,247,0.3)",
   },
   messageBubble: {
-    maxWidth: "70%",
+    maxWidth: "min(70%, 800px)",
     padding: "14px 18px",
     borderRadius: "16px",
     wordWrap: "break-word",
@@ -569,6 +575,8 @@ const styles = {
     borderBottom: "1px solid rgba(251,146,60,0.3)",
     paddingBottom: "12px",
     marginBottom: "12px",
+    wordWrap: "break-word",
+    overflowWrap: "break-word",
   },
   typingIndicator: {
     display: "flex",
@@ -611,6 +619,9 @@ const styles = {
     transition: "border-color 0.2s, box-shadow 0.2s",
     maxHeight: "120px",
     minHeight: "44px",
+    wordWrap: "break-word",
+    overflowWrap: "break-word",
+    whiteSpace: "pre-wrap",
   },
   button: {
     padding: "12px 16px",
@@ -636,22 +647,26 @@ const styles = {
     background: "rgba(251,146,60,0.05)",
     borderRadius: "8px",
     padding: "12px",
+    maxWidth: "100%",
+    overflow: "hidden",
   },
   keywordsGrid: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "8px",
+    gap: "6px",
     marginTop: "8px",
+    maxWidth: "100%",
   },
   keyword: {
     display: "inline-block",
-    padding: "6px 12px",
+    padding: "4px 10px",
     background: "rgba(251,146,60,0.2)",
     border: "1px solid rgba(251,146,60,0.4)",
     borderRadius: "6px",
-    fontSize: "12px",
+    fontSize: "11px",
     fontWeight: "500",
     color: "#FCD34D",
     whiteSpace: "nowrap",
+    flexShrink: 0,
   },
 };
