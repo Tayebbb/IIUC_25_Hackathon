@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateMatchScore, getMatchLevel } from '../utils/matchScore';
@@ -47,14 +47,44 @@ const Jobs = () => {
       setError('');
 
       // Fetch user profile
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      let userData;
+      
       if (!userDoc.exists()) {
-        setError('User profile not found. Please complete your profile first.');
+        // Create default user profile if it doesn't exist (for existing users)
+        console.log('User profile not found, creating default profile...');
+        userData = {
+          name: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+          email: currentUser.email,
+          skills: [],
+          tools: [],
+          experienceLevel: '',
+          preferredTrack: '',
+          bio: '',
+          location: '',
+          education: '',
+          createdAt: new Date().toISOString()
+        };
+        
+        // Create the user document
+        await setDoc(userDocRef, userData);
+        
+        // Redirect to profile to complete setup
+        setError('Please complete your profile to view job matches.');
         setLoading(false);
         return;
+      } else {
+        userData = userDoc.data();
+        
+        // Ensure all required fields exist (migration for old users)
+        if (!userData.skills) userData.skills = [];
+        if (!userData.tools) userData.tools = [];
+        if (!userData.experienceLevel) userData.experienceLevel = '';
+        if (!userData.preferredTrack) userData.preferredTrack = '';
       }
 
-      const userData = userDoc.data();
       setUserProfile(userData);
 
       // Fetch all jobs

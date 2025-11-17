@@ -26,10 +26,17 @@ export const AuthProvider = ({ children }) => {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
       
-      // Create user document in Firestore
+      // Create comprehensive user document in Firestore
       await setDoc(doc(db, 'users', result.user.uid), {
         name,
         email,
+        skills: [],
+        tools: [],
+        experienceLevel: '',
+        preferredTrack: '',
+        bio: '',
+        location: '',
+        education: '',
         createdAt: new Date().toISOString()
       });
       
@@ -62,7 +69,23 @@ export const AuthProvider = ({ children }) => {
       const userSnap = await getDoc(userDocRef);
       
       if (!userSnap.exists()) {
+        // Create comprehensive user profile
         await setDoc(userDocRef, {
+          name: result.user.displayName,
+          email: result.user.email,
+          skills: [],
+          tools: [],
+          experienceLevel: '',
+          preferredTrack: '',
+          bio: '',
+          location: '',
+          education: '',
+          createdAt: new Date().toISOString()
+        });
+        
+        // Also create ChatBot document for backward compatibility
+        const chatBotDocRef = doc(db, 'ChatBot', result.user.email);
+        await setDoc(chatBotDocRef, {
           name: result.user.displayName,
           email: result.user.email,
           createdAt: new Date().toISOString()

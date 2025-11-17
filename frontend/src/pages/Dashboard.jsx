@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { User, Briefcase, BookOpen, TrendingUp, ArrowRight, GraduationCap, CheckCircle, Sparkles, MapPin, Award } from 'lucide-react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../firebase';
 import { calculateMatchScore } from '../utils/matchScore';
@@ -52,9 +52,38 @@ const Dashboard = () => {
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        setUserProfile(userData);
-        setProfileCompletion(calculateCompletion(userData));
+        
+        // Ensure all required fields exist (migration for old users)
+        const completeUserData = {
+          skills: [],
+          tools: [],
+          experienceLevel: '',
+          preferredTrack: '',
+          bio: '',
+          location: '',
+          education: '',
+          ...userData
+        };
+        
+        setUserProfile(completeUserData);
+        setProfileCompletion(calculateCompletion(completeUserData));
       } else {
+        // Create default user profile if it doesn't exist
+        const defaultProfile = {
+          name: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'User',
+          email: auth.currentUser?.email,
+          skills: [],
+          tools: [],
+          experienceLevel: '',
+          preferredTrack: '',
+          bio: '',
+          location: '',
+          education: '',
+          createdAt: new Date().toISOString()
+        };
+        
+        await setDoc(userDocRef, defaultProfile);
+        setUserProfile(defaultProfile);
         setProfileCompletion(0);
       }
     } catch (error) {

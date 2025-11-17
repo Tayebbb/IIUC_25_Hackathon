@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Edit, Save, X, GraduationCap, Briefcase, Target, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { applicationsService } from '../services/firestoreService';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import toast from 'react-hot-toast';
 import { CAREER_TRACKS, EXPERIENCE_LEVELS, LOCATIONS } from '../constants/jobConstants';
@@ -48,10 +48,39 @@ const Profile = () => {
       const userDocRef = doc(db, 'users', currentUser.uid);
       const userDoc = await getDoc(userDocRef);
       
-      let userData = { email: currentUser.email, displayName: currentUser.displayName };
+      let userData = { 
+        email: currentUser.email, 
+        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
+      };
       
       if (userDoc.exists()) {
         userData = { ...userData, ...userDoc.data() };
+        
+        // Ensure all required fields exist (migration for old users)
+        if (!userData.skills) userData.skills = [];
+        if (!userData.tools) userData.tools = [];
+        if (!userData.experienceLevel) userData.experienceLevel = '';
+        if (!userData.preferredTrack) userData.preferredTrack = '';
+        if (!userData.bio) userData.bio = '';
+        if (!userData.location) userData.location = '';
+        if (!userData.education) userData.education = '';
+      } else {
+        // Create default profile for users who don't have one
+        const defaultProfile = {
+          name: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+          email: currentUser.email,
+          skills: [],
+          tools: [],
+          experienceLevel: '',
+          preferredTrack: '',
+          bio: '',
+          location: '',
+          education: '',
+          createdAt: new Date().toISOString()
+        };
+        
+        await setDoc(userDocRef, defaultProfile);
+        userData = { ...userData, ...defaultProfile };
       }
       
       setProfile(userData);

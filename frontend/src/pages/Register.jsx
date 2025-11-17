@@ -153,10 +153,31 @@ const Register = () => {
         console.log('Display name updated to:', formData.name);
       }
 
-      // 3️⃣ Create Firestore document in collection "ChatBot" with doc ID = email
-      const chatBotDocRef = doc(db, 'ChatBot', formData.email);
-      console.log('Writing Firestore doc at ChatBot/' + formData.email);
+      // 3️⃣ Create Firestore document in "users" collection with doc ID = uid
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      console.log('Writing Firestore doc at users/' + userCredential.user.uid);
 
+      await setDoc(
+        userDocRef,
+        {
+          email: formData.email,
+          name: formData.name,
+          education: formData.education,
+          experienceLevel: formData.experienceLevel,
+          preferredTrack: formData.careerTrack,
+          skills: [],
+          tools: [],
+          bio: '',
+          location: '',
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      console.log('User document successfully created for:', formData.email);
+
+      // Also create ChatBot document for backward compatibility
+      const chatBotDocRef = doc(db, 'ChatBot', formData.email);
       await setDoc(
         chatBotDocRef,
         {
