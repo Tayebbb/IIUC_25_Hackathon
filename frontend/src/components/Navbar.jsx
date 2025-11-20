@@ -47,6 +47,7 @@ const Navbar = () => {
     { name: 'AI Assistance', href: '/chatassistance', icon: '💬' },
     { name: 'CV Upload', href: '/cv-upload', icon: '📄' },
     { name: 'Career Roadmap', href: '/career-roadmap', icon: '🗺️' },
+    { name: 'Mock Interview', href: '/mock-interview', icon: '🎤' },
   ];
 
   const publicNavLinks = [

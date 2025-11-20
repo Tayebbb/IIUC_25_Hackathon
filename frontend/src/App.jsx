@@ -34,6 +34,7 @@ const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCourses = lazy(() => import("./pages/AdminCourses"));
 const JobMarketInsights = lazy(() => import("./pages/JobMarketInsights"));
+const MockInterview = lazy(() => import("./pages/MockInterview"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -76,6 +77,7 @@ function AppContent() {
             <Route path="/chatassistance" element={<ProtectedRoute><Chatassistance /></ProtectedRoute>} />
             <Route path="/cv-upload" element={<ProtectedRoute><CvUpload /></ProtectedRoute>} />
             <Route path="/career-roadmap" element={<ProtectedRoute><CareerRoadmap /></ProtectedRoute>} />
+            <Route path="/mock-interview" element={<ProtectedRoute><MockInterview /></ProtectedRoute>} />
             <Route path="/job-market-insights" element={<JobMarketInsights />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
